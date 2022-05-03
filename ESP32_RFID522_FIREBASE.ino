@@ -37,8 +37,8 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 /* 1. Define the WiFi credentials */
-#define WIFI_SSID "kh11"
-#define WIFI_PASSWORD "10203010"
+#define WIFI_SSID "The Promised LAN"
+#define WIFI_PASSWORD "SissoCatanMe0"
 /* 2. Define the API Key */
 #define API_KEY "AIzaSyDVqDgltLIhBE6_KHj6jp337cB84uQmmbM"
 /* 3. Define the project ID */
@@ -56,6 +56,7 @@
 #include <Wire.h>
 #include "graphics.h"
 #include "SPIFFS.h" 
+#include <string>
 PCF8574 pcf8574(0x21);
 SPI_LCD_FrameBuffer lcd;
 
@@ -173,7 +174,7 @@ void setup()
 	Serial.println(F("End setup"));
 
   // for firebase:
-      Serial.begin(115200);
+    //  Serial.begin(115200);
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     Serial.print("Connecting to Wi-Fi");
@@ -209,7 +210,8 @@ void setup()
  */
 void loop() 
 {
-	char tmpStr[20];
+  bool card = false;
+	char tmpStr[14];
 	lcd.loadFonts(ORBITRON_LIGHT24);
 	lcd.setColor(255, 0, 0);
 	int i,j;
@@ -217,7 +219,7 @@ void loop()
 	lcd.fillScr(255, 255, 255);
 	lcd.print("Pass your card", 0, 135 / 2 - 24 / 2, true);
 	lcd.flushFrameBuffer();
-
+  
 	while (1)
 	{
 		if (bNewInt)
@@ -244,51 +246,55 @@ void loop()
 			clearInt(mfrc522);
 			mfrc522.PICC_HaltA();
 			bNewInt = false;
+      card = true;
 		}
 		// The receiving block needs regular retriggering (tell the tag it should transmit??)
 		// (mfrc522.PCD_WriteRegister(mfrc522.FIFODataReg,mfrc522.PICC_CMD_REQA);)
 		activateRec(mfrc522);
 		delay(100);
-
+    
     // for firebase:
-    if (Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
+    if (card && Firebase.ready() && (millis() - dataMillis > 60000 || dataMillis == 0))
     {
-        dataMillis = millis();
+      dataMillis = millis();
+      if (!taskCompleted)
+      {
+        taskCompleted = true;
+        // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+        FirebaseJson content;
+        // info is the collection id, countries is the document id in collection info.
+        char buffer[30];
+        char a[] = "Registration/";
+        strcpy(buffer, a);
+        strcat(buffer, tmpStr);
+        //String documentPath = ("Registration/" + String(tmpStr));
 
-        if (!taskCompleted)
-        {
-            taskCompleted = true;
+        content.set("fields/time/stringValue", "put time stamp tommorow :) ");
 
-            // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
-            FirebaseJson content;
+        Serial.print("Create document... ");
 
-            content.set("/Registration", "9");
-
-            // info is the collection id, countries is the document id in collection info.
-            String documentPath = "Registration/card_id";
-
-            Serial.print("Create document... ");
-
-            if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, documentPath.c_str(), content.raw()))
-                Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
-            else
-                Serial.println(fbdo.errorReason());
-        }
-
-        String documentPath = "Registration/card_id";
-        String mask = "Singapore";
-
-        // If the document path contains space e.g. "a b c/d e f"
-        // It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
-
-        Serial.print("Get a document... ");
-
-        if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str()))
-            Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+        if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "" /* databaseId can be (default) or empty */, buffer, content.raw()))
+          Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
         else
-            Serial.println(fbdo.errorReason());
+          Serial.println(fbdo.errorReason());
+      }
+
+      String documentPath = "Registration/" ;
+      String mask = "Singapore";
+
+      // If the document path contains space e.g. "a b c/d e f"
+      // It should encode the space as %20 then the path will be "a%20b%20c/d%20e%20f"
+
+      Serial.print("Get a document... ");
+
+      if (Firebase.Firestore.getDocument(&fbdo, FIREBASE_PROJECT_ID, "", documentPath.c_str(), mask.c_str()))
+          Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+      else
+          Serial.println(fbdo.errorReason());
     }
-	}
+    taskCompleted = false;
+    card = false;
+  }
 } //loop()
 
 /**
