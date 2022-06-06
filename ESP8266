@@ -1,0 +1,493 @@
+/*
+ Name:		ESP8266_WiFi_Lab.ino
+ Created:	14-Jul-21 9:38:27 PM
+ Author:	shirry_nir
+*/
+
+//#include "PCF8574.h"
+//#include <Wire.h>
+//#include "graphics.h"
+//#include "SPIFFS.h" 
+#include "FS.h"
+
+
+
+bool spiffsOK = false;
+
+// WiFi part
+//#include <WiFi.h>
+//#include <ESPmDNS.h>
+//#include <WebServer.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
+
+/* ESP Now Related*/
+#include "espnow.h"
+// declaration of callback functions
+void OnDataSent(const uint8_t *mac_addr, uint8_t status);
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
+
+//#define MASTER
+#define PEER
+
+// MAC addresses
+#define MAC_LEN 6
+uint8_t masterMACaddress[] = { 0x10, 0x52, 0x1C, 0x66, 0x74, 0x60 }; // Main board
+uint8_t peer01MACaddress[] = { 0x24, 0x62, 0xAB, 0xF9, 0x96, 0x20 }; // SonOff board
+uint8_t * targetMACaddress;
+String deviceMAC;
+
+ESP8266WebServer server(80);
+void handle_OnConnect();
+void wifiSetup_page();
+void handle_NotFound();
+
+bool wifiSetupPageVisited = false;
+
+//PCF8574 pcf8574(0x21);
+//SPI_LCD_FrameBuffer lcd;
+
+// class ttgoCDacc : public lcdHwAccessor
+// {
+// public:
+// 	ttgoCDacc() {};
+// 	~ttgoCDacc() {};
+// 	void setup()
+// 	{
+// 		pinMode(5, OUTPUT); //chip select
+// 		pinMode(23, OUTPUT); //reset
+// 		pinMode(4, OUTPUT); //Back Light
+// 	}
+// 	void reset()
+// 	{
+// 		digitalWrite(23, LOW);
+// 		delay(250);
+// 		digitalWrite(23, HIGH);
+// 		delay(250);
+// 	};
+// 	void assertCS()
+// 	{
+// 		digitalWrite(5, LOW);
+// 	}
+// 	void deAssertCS()
+// 	{
+// 		digitalWrite(5, HIGH);
+// 	}
+// 	void backLightOn()
+// 	{
+// 		digitalWrite(4, HIGH);
+// 	}
+// 	void backLightOff()
+// 	{
+
+// 	}
+// } ttgoLCDaccessor;
+
+// the setup function runs once when you press reset or power the board
+void setup()
+{
+	// Setup the IOs
+	Serial.begin(115200);
+	// pcf8574.begin();
+	// pcf8574.pinMode(P6, OUTPUT); // Red LED
+	// pcf8574.pinMode(P7, OUTPUT); // Yellow LED
+	// pcf8574.digitalWrite(P7, HIGH);
+	// pcf8574.digitalWrite(P6, HIGH);
+
+	// if (!lcd.init(st7789_240x135x16_FB, &ttgoLCDaccessor, 16, 19, 18, 40000000))
+	// {
+	// 	printf("LCD init error\n");
+	// 	while (1);
+	// }
+
+#define WIFI_TIMEOUT	20 // 10 seconds
+	// WiFi Part
+	WiFi.mode(WIFI_AP_STA);
+	if (!WiFi.softAP("sonoff8266AP", "12345678"))
+	{
+		Serial.println("Failed to init WiFi AP");
+	}
+	else
+	{
+		Serial.println("IP address of AP is:");
+		Serial.println((WiFi.softAPIP()));
+	}
+	if (!MDNS.begin("esp32"))
+	{
+		printf("Error setting up MDNS responder!\n");
+	}
+	else
+		printf("mDNS responder started\n");
+	MDNS.addService("http", "tcp", 80);
+	// Web pages setup
+	server.on("/", handle_OnConnect);
+	server.on("/wifiSetupSelected", wifiSetup_page);
+	server.onNotFound(handle_NotFound);
+	server.begin();
+
+	spiffsOK = false;
+	if (SPIFFS.begin())
+	{
+		Serial.println("SPIFFS mounted");
+		spiffsOK = true;
+	}
+	else
+	{
+		if (SPIFFS.format())
+		{
+			printf("SPIFFS formated\n");
+			if (SPIFFS.begin())
+			{
+				printf("SPIFFS mounted\n");
+				spiffsOK = true;
+			}
+		}
+	}
+	if (spiffsOK == false)
+	{
+		printf("SPIFFS error!\n");
+	}
+	
+	// Init ESP-NOW
+
+	if (esp_now_init() != 0) {
+		Serial.println("Error initializing ESP-NOW");
+	}
+
+// Set ESP-NOW
+ esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+
+
+	/* Callback Functions */
+	// On Tx
+	esp_now_register_send_cb(OnDataSent); 
+	// On Rx
+	esp_now_register_recv_cb(OnDataRecv);
+
+	// /* Register peer */
+	// esp_now_peer_info_t peerInfo;
+	// memset(&peerInfo, 0, sizeof(peerInfo));
+
+	// when flashing the board
+#if defined(MASTER)
+	targetMACaddress = peer01MACaddress;
+	//memcpy(peerInfo.peer_addr, targetMACaddress, MAC_LEN);
+
+	peerInfo.channel = 0;
+	peerInfo.encrypt = false;
+
+	// Add peer
+	// if (esp_now_add_peer(&peerInfo) != ESP_OK)
+	// {
+	// 	Serial.println("Failed to add peer");
+	// }
+#else
+	targetMACaddress = masterMACaddress;
+#endif
+
+}
+
+String wifiName = "TPLINK", wifiPass = "";
+bool connectToWiFiSTA(const char * name, const char * pass);
+bool sendSuccessfully = false;
+bool recvSuccessfully = false;
+unsigned short time = 0;
+void loop()
+{
+	int numOfClientsConnected;
+	//lcd.loadFonts(ORBITRON_LIGHT24);
+	File file;
+	char tempStr[32];
+	bool wifiBeginCalled = false, IO3set = true;
+
+	if (spiffsOK)
+	{
+		file = SPIFFS.open("/wifiSetup.txt", "r");
+		if (file)
+		{
+			wifiName = file.readStringUntil('\n');
+			printf("wifi name: %s\n", wifiName.c_str());
+			wifiPass = file.readStringUntil('\n');
+			printf("wifi pass: %s\n", wifiPass.c_str());
+			file.close();
+		}
+	}
+	connectToWiFiSTA(wifiName.c_str(), wifiPass.c_str());
+	wifiBeginCalled = true;
+
+	deviceMAC = WiFi.macAddress();
+
+	printf("MAC address: %s\n",deviceMAC.c_str());
+	while (1)
+	{
+		numOfClientsConnected = WiFi.softAPgetStationNum();
+		// If WiFi is not connected and we have a user connected to our AP, trying to connect keeps changing the WiFi channel and will cause disconnectation of the user from our AP
+		if ((numOfClientsConnected > 0) && (WiFi.status() != WL_CONNECTED))
+		{
+			WiFi.disconnect();
+			delay(1000);
+			wifiBeginCalled = false;
+		}
+		if ((numOfClientsConnected == 0) && (WiFi.status() != WL_CONNECTED))
+		{
+			// only once!!
+			if (!wifiBeginCalled)
+			{
+				WiFi.begin(wifiName.c_str(), wifiPass.c_str());
+				wifiBeginCalled = true;
+			}
+		}
+		if ((numOfClientsConnected > 0) || (WiFi.status() == WL_CONNECTED))
+		{
+			server.handleClient();
+			if (wifiSetupPageVisited)
+			{
+				if (server.args() >= 2)
+				{ // Arguments were received
+					String ssidName = server.arg(0);
+					String ssidPassword = server.arg(1);
+
+					Serial.println(server.args());
+					Serial.println((const char*)ssidName.c_str());
+					Serial.println((const char*)ssidPassword.c_str());
+					wifiSetupPageVisited = false;
+					if (spiffsOK)
+					{
+						if (ssidName != wifiName || ssidPassword != wifiPass)
+						{
+							file = SPIFFS.open("/wifiSetup.txt", "w");
+							if (file)
+							{
+								sprintf(tempStr, "%s\n", ssidName.c_str());
+								file.write((const unsigned char*)tempStr, strlen(tempStr));
+								sprintf(tempStr, "%s\n", ssidPassword.c_str());
+								file.write((const unsigned char*)tempStr, strlen(tempStr));
+
+								file.flush();
+								file.close();
+								wifiName = ssidName;
+								wifiPass = ssidPassword;
+								WiFi.disconnect();
+								delay(1000);
+								WiFi.begin(wifiName.c_str(), wifiPass.c_str());
+							}
+						}
+					}
+				}
+			}
+		}
+		//lcd.fillScr(0, 0, 0);
+		//lcd.setColor(255, 255, 255);
+		if (WiFi.status() == WL_CONNECTED)
+		{
+			//lcd.print("WiFi Connected", 0, 60, true);
+			//lcd.print((char *)WiFi.localIP().toString().c_str(), 0, 100, true);
+		}
+#if defined(MASTER)
+		size_t dataLength = 5;
+		uint8_t data[5] = { 0xAA, 0x55 };
+#else
+		size_t dataLength = 3;
+		uint8_t data[3] = { 0x88, 0x33, 0x44 };
+#endif
+
+		int iteration = 0;
+		uint8_t result;
+    unsigned int counter =0;
+		while (1)
+		{
+      delay(100);
+      counter++;
+      if (counter == 600)
+        {
+          counter = 0;
+          if(time > 0)
+          time--;
+        }
+      if(time > 0){
+        digitalWrite(12, LOW);
+      }
+      else{
+        digitalWrite(12, HIGH);
+      }
+		
+		}
+		//lcd.flushFrameBuffer();
+	}
+}
+
+#define WIFI_TIMEOUT	20 // 10 seconds
+bool connectToWiFiSTA(const char * name, const char * pass)
+{
+	unsigned int timeOutCounter = 0;
+	WiFi.begin(name, pass);
+	while ((WiFi.status() != WL_CONNECTED) && (timeOutCounter < WIFI_TIMEOUT))
+	{
+		delay(500);
+		Serial.print(".");
+		timeOutCounter++;
+	}
+	if (timeOutCounter != WIFI_TIMEOUT)
+	{
+		printf("\nWiFi connected.\n");
+		Serial.println(WiFi.localIP().toString().c_str());
+		Serial.println(WiFi.macAddress());
+		return true;
+	}
+	else
+	{
+		printf("WiFi: cannot connect to: %s\n", name);
+		return false;
+	}
+  ESP.wdtFeed();
+}
+
+const char mainMenuPage[]PROGMEM = R"=====(
+<!DOCTYPE html> 
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ESP32 WebPage</title>
+<style>
+html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}
+body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 50px;}
+.button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 10px;}
+.button-on {background-color: #1abc9c;}
+.button-on:active {background-color: #16a085;}
+p {font-size: 14px;color: #888;margin-bottom: 10px;}
+</style>
+</head>
+<body>
+<meta charset="utf-8">
+<html lang="he">
+<h1>SonOff lab web page</h1>
+<a class="button button-on" href="/wifiSetupSelected">WiFi Setup</a>
+</body>
+<href="/">
+</html>)=====";
+
+const char setupWiFiHTMLpart1[]PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+html {font-family: Arial; display: inline-block; text-align: center;}
+.button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 10px;}
+.boxStyle {  padding: 12px 20px;  margin: 8px 0;  box-sizing: border-box;  border: 2px solid red;  border-radius: 10px; font-size: 20px;text-align: center;}
+</style>
+</head>
+<body>
+<form action="/" method="POST">
+Access Point Name:<br>
+<input type="text" class="boxStyle" name="AccessPoint" value=
+)rawliteral";
+//""><br>
+const char setupWiFiHTMLpart2[]PROGMEM = R"rawliteral(
+Password:<br>
+<input type="text" class="boxStyle" name="Password" value=
+)rawliteral";
+//""><br>
+const char setupWiFiHTMLpart3[]PROGMEM = R"rawliteral(
+<input type="submit" class="button" value="OK">
+</form>
+</body>
+<href="/">
+</html>
+)rawliteral";
+
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html {font-family: Arial; display: inline-block; text-align: center;}
+    h2 {font-size: 3.0rem;}
+    p {font-size: 3.0rem;}
+    body {max-width: 600px; margin:0px auto; padding-bottom: 25px;}
+    .switch {position: relative; display: inline-block; width: 120px; height: 68px} 
+    .switch input {display: none}
+    .slider {position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 34px}
+    .slider:before {position: absolute; content: ""; height: 52px; width: 52px; left: 8px; bottom: 8px; background-color: #fff; -webkit-transition: .4s; transition: .4s; border-radius: 68px}
+    input:checked+.slider {background-color: #2196F3}
+    input:checked+.slider:before {-webkit-transform: translateX(52px); -ms-transform: translateX(52px); transform: translateX(52px)}
+    .button {display: block;width: 80px;background-color: #1abc9c;border: none;color: white;padding: 13px 30px;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;border-radius: 10px;}
+  </style>
+</head>
+<body>
+<h2>ESP Web Server</h2>
+<h4>IO #1</h4>
+<label class="switch"><input type="checkbox" onchange="toggleCheckbox(this)" id="1" checked><span class="slider"></span></label>
+<h4>IO #2</h4>
+<label class="switch"><input type="checkbox" onchange="toggleCheckbox(this)" id="2" checked><span class="slider"></span></label>
+<h4>IO #3</h4>
+<label class="switch"><input type="checkbox" onchange="toggleCheckbox(this)" id="3" checked><span class="slider"></span></label>
+<h4><a class="button button-on" href="/">Home</a></h4>
+<script>function toggleCheckbox(element) {
+	var request = new XMLHttpRequest();
+	var strOn	= "IO " + element.id + " ON";
+	var strOff	= "IO " + element.id + " OFF";
+	if(element.checked){ request.open("POST", "", true); request.setRequestHeader("Content-type", " ");request.send(strOn);}
+	else { request.open("POST", "", true); request.setRequestHeader("Content-type", " ");request.send(strOff);}
+	die();
+}</script>
+</body>
+<href="/">
+</html>
+)rawliteral";
+
+void handle_OnConnect()
+{
+	server.send(200, "text/html", mainMenuPage);
+}
+
+void wifiSetup_page()
+{
+	wifiSetupPageVisited = true;
+	String setupWiFiHTML = setupWiFiHTMLpart1;
+	//""><br>
+	setupWiFiHTML += "\"";
+	setupWiFiHTML += wifiName;
+	setupWiFiHTML += "\"><br>";
+	setupWiFiHTML += setupWiFiHTMLpart2;
+	setupWiFiHTML += "\"";
+	setupWiFiHTML += wifiPass;
+	setupWiFiHTML += "\"><br>";
+	setupWiFiHTML += setupWiFiHTMLpart3;
+	setupWiFiHTML += "MAC Address: ";
+	setupWiFiHTML += deviceMAC.c_str();
+	setupWiFiHTML += "<br>";
+
+	server.send(200, "text/html", setupWiFiHTML);
+	printf("wifiSetupPageVisited\n");
+}
+
+void handle_NotFound()
+{
+	server.send(404, "text/plain", "Not found");
+}
+
+// ESPnow related
+// Callback when data is sent
+void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus)
+{
+	Serial.print("\r\nLast Packet Send Status:\t");
+	Serial.println(sendStatus == 0 ? "Deliverd Successfully" : "Delivery Failed");
+  if(sendStatus == 0) sendSuccessfull = true;
+}
+
+// Callback when data is received
+void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len)
+{
+	printf("%d Bytes received\n", len);
+	for (size_t i = 0; i < len; i++)
+	{
+		printf("%x", incomingData[i]);
+	}
+	printf("\n");
+  
+  time = ((incomingData[2] << 8) | incomingData[1]);
+}
+
+
