@@ -356,7 +356,7 @@ void loop()
 			card = true;
 
 			//handle ID 0 problem
-			if (tmpStr == "00000000") {
+			if (tmpStr == "") {
 				card = false;
 			}
 		}
