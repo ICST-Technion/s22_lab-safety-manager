@@ -23,6 +23,8 @@
  *
  */
 
+//for time:
+#include "time.h"
  // for firebase:
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
@@ -30,14 +32,14 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 /* 1. Define the WiFi credentials */
-#define WIFI_SSID "Galaxy S20+dddc" //"The Promised LAN" //"Shirry's iPhone 12 Pro" //
-#define WIFI_PASSWORD "akzp6337" //"SissoCatanMe0" // "bank4403" //
+#define WIFI_SSID "The Promised LAN" //"Shirry's iPhone 12 Pro" //
+#define WIFI_PASSWORD "SissoCatanMe0" // "bank4403" //
 //#define WIFI_SSID "kh11"
 //#define WIFI_PASSWORD "10203010"
 /* 2. Define the API Key */
-#define API_KEY "AIzaSyDVqDgltLIhBE6_KHj6jp337cB84uQmmbM"//"AIzaSyARjaR0orzp-QfY1SLXRUo97yqaWOuHd3M"// "AIzaSyDVqDgltLIhBE6_KHj6jp337cB84uQmmbM"
+#define API_KEY "AIzaSyDVqDgltLIhBE6_KHj6jp337cB84uQmmbM"
 /* 3. Define the project ID */
-#define FIREBASE_PROJECT_ID "safetymanager-52fc3"//"esp32-firebase-demo-f2667" //"safetymanager-52fc3"
+#define FIREBASE_PROJECT_ID "safetymanager-52fc3"
 /* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "iot.project.tns@gmail.com"
 #define USER_PASSWORD "Iot123456"
@@ -63,6 +65,11 @@ FirebaseAuth auth;
 FirebaseConfig config;
 bool taskCompleted = false;
 unsigned long dataMillis = 0;
+
+// for time:
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 0;
+const int   daylightOffset_sec = 3600;
 
 
 class ttgoCDacc : public lcdHwAccessor
@@ -259,6 +266,9 @@ void setup()
 	Serial.println(WiFi.localIP());
 	Serial.println();
 
+	// for time:
+	configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
 	Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
 	/* Assign the api key (required) */
@@ -433,11 +443,38 @@ void loop()
 					if (int_student_perm <= int_machine_perm) {
 						Serial.printf("student has permission\n");
 						//open sonoff for machine_duration time
-						if (!sendDataBack(sonoffMACaddress, (char*)machine_duration, 10))
+						if (!sendDataBack(sonoffMACaddress, (char*)machine_duration, 10)) {
 							printf("sonoff Error\n");
-						else
-							printf("sonoff OK\n");
 
+							struct tm timeinfo;
+							if (!getLocalTime(&timeinfo)) {
+								Serial.println("Failed to obtain time");
+								return;
+							}
+
+							char time_buffer[1000];
+							sprintf(time_buffer, "%02d:%02d:%02d %02d/%02d/%02d", (timeinfo.tm_hour + 2) % 24, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
+							Serial.println(time_buffer);
+
+							// add to history
+							char history_buffer[30];
+							char history_col[] = "History";
+							strcpy(history_buffer, history_col);
+
+							FirebaseJson content;
+							content.set("fields/card_id/stringValue", tmpStr);
+							content.set("fields/machine_id/stringValue", MACHINE_ID);
+							content.set("fields/time/stringValue", time_buffer);
+							Serial.print("Create document... ");
+
+							if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", history_buffer, content.raw()))
+								Serial.printf("ok\n%s\n\n", fbdo.payload().c_str());
+							else
+								Serial.println(fbdo.errorReason());
+						}
+						else {
+							printf("sonoff OK\n");
+						}
 					}
 					else {
 						Serial.printf("student does not have permission");
@@ -445,6 +482,16 @@ void loop()
 				}
 				// card_id does not exist
 				else {
+					struct tm timeinfo;
+					if (!getLocalTime(&timeinfo)) {
+						Serial.println("Failed to obtain time");
+						return;
+					}
+
+					char time_buffer[1000];
+					sprintf(time_buffer, "%02d:%02d:%02d %02d/%02d/%02d", (timeinfo.tm_hour+2)%24, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
+					Serial.println(time_buffer);
+
 					char registration_buffer[30];
 					char registration_col[] = "Registration/";
 					strcpy(registration_buffer, registration_col);
@@ -453,7 +500,7 @@ void loop()
 					FirebaseJson content;
 					content.set("fields/card_id/stringValue", tmpStr);
 
-					content.set("fields/time/stringValue", "put time stamp tommorow");
+					content.set("fields/time/stringValue", time_buffer);
 					Serial.print("Create document... ");
 
 					if (Firebase.Firestore.createDocument(&fbdo, FIREBASE_PROJECT_ID, "", registration_buffer, content.raw()))
@@ -504,5 +551,3 @@ void clearInt(MFRC522 mfrc522)
 {
 	mfrc522.PCD_WriteRegister(mfrc522.ComIrqReg, 0x7F);
 }
-
-
