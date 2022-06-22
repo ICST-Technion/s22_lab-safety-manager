@@ -23,7 +23,7 @@
  *
  */
 
-//for time:
+ //for time:
 #include "time.h"
  // for firebase:
 #include <ArduinoJson.hpp>
@@ -44,7 +44,7 @@
 #define USER_EMAIL "iot.project.tns@gmail.com"
 #define USER_PASSWORD "Iot123456"
 
-#define MACHINE_ID "1"
+#define MACHINE_ID "3"
 
 
 // for RFID
@@ -446,6 +446,7 @@ void loop()
 						if (!sendDataBack(sonoffMACaddress, (char*)machine_duration, 10)) {
 							printf("sonoff Error\n");
 
+							//TODO: move to sonoff ok
 							struct tm timeinfo;
 							if (!getLocalTime(&timeinfo)) {
 								Serial.println("Failed to obtain time");
@@ -489,7 +490,7 @@ void loop()
 					}
 
 					char time_buffer[1000];
-					sprintf(time_buffer, "%02d:%02d:%02d %02d/%02d/%02d", (timeinfo.tm_hour+2)%24, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
+					sprintf(time_buffer, "%02d:%02d:%02d %02d/%02d/%02d", (timeinfo.tm_hour + 2) % 24, timeinfo.tm_min, timeinfo.tm_sec, timeinfo.tm_mday, timeinfo.tm_mon + 1, timeinfo.tm_year + 1900);
 					Serial.println(time_buffer);
 
 					char registration_buffer[30];
