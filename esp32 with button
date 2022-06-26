@@ -23,8 +23,6 @@
  *
  */
 
-#include <FFat.h>
-
  //for time:
 #include "time.h"
  // for firebase:
@@ -34,8 +32,8 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 /* 1. Define the WiFi credentials */
-#define WIFI_SSID "NETGEAR98"//"TPLINK"//"The Promised LAN" //"Shirry's iPhone 12 Pro" //
-#define WIFI_PASSWORD "coolfire180"//"SissoCatanMe0" // "bank4403" //
+#define WIFI_SSID "Galaxy S20+dddc"//"NETGEAR98"//"The Promised LAN" //"Shirry's iPhone 12 Pro" //
+#define WIFI_PASSWORD "akzp6337"//"coolfire180"//"SissoCatanMe0" // "bank4403" //
 //#define WIFI_SSID "kh11"
 //#define WIFI_PASSWORD "10203010"
 /* 2. Define the API Key */
@@ -48,24 +46,6 @@
 
 #define MACHINE_ID "3"
 
-//for STOP button:
-#define BUTTON_PIN 17
-
-//for buzzer:
-#define BUZZER_PIN 26 
-
-//for timer:
-hw_timer_t* timer = NULL;
-unsigned int time_counter = 0;
-
-void IRAM_ATTR onTimer()
-{
-	if (time_counter != 0)
-	{
-		time_counter--;
-	}
-}
-
 
 // for RFID
 #include <SPI.h>
@@ -77,13 +57,6 @@ void IRAM_ATTR onTimer()
 #include <string>
 PCF8574 pcf8574(0x21);
 SPI_LCD_FrameBuffer lcd;
-/*
- * The function to clear the pending interrupt bits after interrupt serving routine
- */
-void clearInt(MFRC522 mfrc522)
-{
-	mfrc522.PCD_WriteRegister(mfrc522.ComIrqReg, 0x7F);
-}
 
 // for firebase:
 // Define Firebase Data object
@@ -98,6 +71,8 @@ const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = 0;
 const int   daylightOffset_sec = 3600;
 
+//for STOP button:
+#define BUTTON_PIN 17
 
 class ttgoCDacc : public lcdHwAccessor
 {
@@ -346,13 +321,9 @@ void setup()
 	{
 		Serial.println("Failed to add sonoff");
 	}
-
+	
 	//for button:
 	pinMode(BUTTON_PIN, INPUT);
-
-	//for buzzer:
-	pinMode(BUZZER_PIN, OUTPUT);
-
 }
 
 /**
@@ -409,6 +380,10 @@ void loop()
 		delay(100);
 
 		// for firebase:
+		if (digitalRead(BUTTON_PIN) == LOW)
+		{
+			sendDataBack(sonoffMACaddress, "0", 10);
+		}
 		if (card && Firebase.ready())
 		{
 			if (!taskCompleted)
@@ -473,7 +448,6 @@ void loop()
 					int int_machine_perm = 0;
 					sscanf(student_perm_level, "%d", &int_student_perm);
 					sscanf(machine_perm_level, "%d", &int_machine_perm);
-					time_counter = (unsigned int)int_machine_perm * 60;
 					if (int_student_perm <= int_machine_perm) {
 						Serial.printf("student has permission\n");
 						//open sonoff for machine_duration time
@@ -545,21 +519,6 @@ void loop()
 				}
 			}
 		}
-
-		/*if (!digitalRead(BUTTON_PIN))
-		{
-			if (!sendDataBack(sonoffMACaddress, "0", 10)) {
-				printf("sonoff stop OK\n");
-				time_counter = 0;
-			}
-			else
-			{
-				printf("sonoff stop ERROR\n");
-			}
-		} */
-
-		//digitalWrite(BUZZER_PIN, HIGH);
-
 		taskCompleted = false;
 		card = false;
 	}
@@ -594,3 +553,10 @@ void activateRec(MFRC522 mfrc522)
 	mfrc522.PCD_WriteRegister(mfrc522.BitFramingReg, 0x87);
 }
 
+/*
+ * The function to clear the pending interrupt bits after interrupt serving routine
+ */
+void clearInt(MFRC522 mfrc522)
+{
+	mfrc522.PCD_WriteRegister(mfrc522.ComIrqReg, 0x7F);
+}
