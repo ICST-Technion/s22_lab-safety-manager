@@ -1,0 +1,63 @@
+[debug] [2022-07-11T07:46:30.449Z] ----------------------------------------------------------------------
+[debug] [2022-07-11T07:46:30.451Z] Command:       /usr/local/bin/node /usr/local/bin/firebase init hosting:github
+[debug] [2022-07-11T07:46:30.451Z] CLI Version:   11.0.1
+[debug] [2022-07-11T07:46:30.452Z] Platform:      darwin
+[debug] [2022-07-11T07:46:30.452Z] Node Version:  v16.13.1
+[debug] [2022-07-11T07:46:30.453Z] Time:          Mon Jul 11 2022 10:46:30 GMT+0300 (Israel Daylight Time)
+[debug] [2022-07-11T07:46:30.453Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2022-07-11T07:46:30.456Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2022-07-11T07:46:30.547Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2022-07-11T07:46:30.547Z] > authorizing via signed-in user (iot.project.tns@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/toharayash/Desktop/technion/semester8/iot/iot-web-app
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2022-07-11T07:46:30.551Z] Using project from CLI flag: safetymanager-52fc3
+[debug] [2022-07-11T07:46:30.552Z] > refreshing access token with scopes: []
+[debug] [2022-07-11T07:46:30.552Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ <request body omitted>
+[debug] [2022-07-11T07:46:32.023Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2022-07-11T07:46:32.023Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2022-07-11T07:46:33.122Z] <<< HTTP RESPONSE 200 {"date":"Mon, 11 Jul 2022 07:46:33 GMT","expires":"Mon, 01 Jan 1990 00:00:00 GMT","pragma":"no-cache","cache-control":"no-cache, no-store, max-age=0, must-revalidate","content-type":"application/json; charset=utf-8","vary":"X-Origin, Referer, Origin,Accept-Encoding","server":"scaffolding on HTTPServer2","x-xss-protection":"0","x-frame-options":"SAMEORIGIN","x-content-type-options":"nosniff","alt-svc":"h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000,h3-Q050=\":443\"; ma=2592000,h3-Q046=\":443\"; ma=2592000,h3-Q043=\":443\"; ma=2592000,quic=\":443\"; ma=2592000; v=\"46,43\"","accept-ranges":"none","transfer-encoding":"chunked"}
+[debug] [2022-07-11T07:46:33.174Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/safetymanager-52fc3 [none]
+[debug] [2022-07-11T07:46:34.726Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/safetymanager-52fc3 200
+[debug] [2022-07-11T07:46:34.726Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/safetymanager-52fc3 {"projectId":"safetymanager-52fc3","projectNumber":"227208185310","displayName":"SafetyManager","name":"projects/safetymanager-52fc3","resources":{"hostingSite":"safetymanager-52fc3","realtimeDatabaseInstance":"safetymanager-52fc3-default-rtdb","storageBucket":"safetymanager-52fc3.appspot.com","locationId":"europe-west"},"state":"ACTIVE"}
+[info] i  Using project safetymanager-52fc3 (SafetyManager) 
+[info] 
+=== Hosting:github Setup
+[info] 
+[info] i  Detected a .git folder at /Users/toharayash/Desktop/technion/semester8/iot/iot-web-app 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=494351689&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...
+[debug] [2022-07-11T07:47:27.695Z] >>> HTTP REQUEST POST https://github.com/login/oauth/access_token  
+ {"client_id":"89cf50f02ac6aaed3484","client_secret":"3330d14abc895d9a74d5f17cd7a00711fa2c5bf0","code":"cce4e701961b2a5156d6","redirect_uri":"http://localhost:9005","state":"494351689"}
+[debug] [2022-07-11T07:47:29.254Z] <<< HTTP RESPONSE 200 {"server":"GitHub.com","date":"Mon, 11 Jul 2022 07:47:29 GMT","content-type":"application/json; charset=utf-8","transfer-encoding":"chunked","vary":"X-PJAX, X-PJAX-Container, Turbo-Visit, Turbo-Frame, Accept-Encoding, Accept, X-Requested-With","permissions-policy":"interest-cohort=()","etag":"W/\"54cbd3423cd2db1c74a1c7cf76615c7c\"","cache-control":"max-age=0, private, must-revalidate","strict-transport-security":"max-age=31536000; includeSubdomains; preload","x-frame-options":"deny","x-content-type-options":"nosniff","x-xss-protection":"0","referrer-policy":"origin-when-cross-origin, strict-origin-when-cross-origin","expect-ct":"max-age=2592000, report-uri=\"https://api.github.com/_private/browser/errors\"","content-security-policy":"default-src 'none'; base-uri 'self'; block-all-mixed-content; child-src github.com/assets-cdn/worker/ gist.github.com/assets-cdn/worker/; connect-src 'self' uploads.github.com objects-origin.githubusercontent.com www.githubstatus.com collector.github.com raw.githubusercontent.com api.github.com github-cloud.s3.amazonaws.com github-production-repository-file-5c1aeb.s3.amazonaws.com github-production-upload-manifest-file-7fdce7.s3.amazonaws.com github-production-user-asset-6210df.s3.amazonaws.com cdn.optimizely.com logx.optimizely.com/v1/events *.actions.githubusercontent.com wss://*.actions.githubusercontent.com online.visualstudio.com/api/v1/locations github-production-repository-image-32fea6.s3.amazonaws.com github-production-release-asset-2e65be.s3.amazonaws.com insights.github.com wss://alive.github.com; font-src github.githubassets.com; form-action 'self' github.com gist.github.com objects-origin.githubusercontent.com; frame-ancestors 'none'; frame-src render.githubusercontent.com viewscreen.githubusercontent.com notebooks.githubusercontent.com; img-src 'self' data: github.githubassets.com identicons.github.com github-cloud.s3.amazonaws.com secured-user-images.githubusercontent.com/ github-production-user-asset-6210df.s3.amazonaws.com *.githubusercontent.com; manifest-src 'self'; media-src github.com user-images.githubusercontent.com/; script-src github.githubassets.com; style-src 'unsafe-inline' github.githubassets.com; worker-src github.com/assets-cdn/worker/ gist.github.com/assets-cdn/worker/","x-github-request-id":"F837:203D:366A00:473BD2:62CBD591"}
+[debug] [2022-07-11T07:47:29.261Z] >>> [apiv2][query] GET https://api.github.com/user [none]
+[debug] [2022-07-11T07:47:32.052Z] <<< [apiv2][status] GET https://api.github.com/user 200
+[debug] [2022-07-11T07:47:32.052Z] <<< [apiv2][body] GET https://api.github.com/user {"login":"tohar-ayash","id":74545511,"node_id":"MDQ6VXNlcjc0NTQ1NTEx","avatar_url":"https://avatars.githubusercontent.com/u/74545511?v=4","gravatar_id":"","url":"https://api.github.com/users/tohar-ayash","html_url":"https://github.com/tohar-ayash","followers_url":"https://api.github.com/users/tohar-ayash/followers","following_url":"https://api.github.com/users/tohar-ayash/following{/other_user}","gists_url":"https://api.github.com/users/tohar-ayash/gists{/gist_id}","starred_url":"https://api.github.com/users/tohar-ayash/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/tohar-ayash/subscriptions","organizations_url":"https://api.github.com/users/tohar-ayash/orgs","repos_url":"https://api.github.com/users/tohar-ayash/repos","events_url":"https://api.github.com/users/tohar-ayash/events{/privacy}","received_events_url":"https://api.github.com/users/tohar-ayash/received_events","type":"User","site_admin":false,"name":null,"company":null,"blog":"","location":null,"email":null,"hireable":null,"bio":null,"twitter_username":null,"public_repos":3,"public_gists":0,"followers":0,"following":0,"created_at":"2020-11-16T12:51:00Z","updated_at":"2022-04-28T15:54:18Z","private_gists":0,"total_private_repos":4,"owned_private_repos":4,"disk_usage":7510,"collaborators":5,"two_factor_authentication":true,"plan":{"name":"free","space":976562499,"collaborators":0,"private_repos":10000}}
+[info] 
+[info] ✔  Success! Logged into GitHub as tohar-ayash 
+[info] 
