@@ -21,10 +21,16 @@ export const RegistrationPage = () => {
 
     async function load() {
       setResult(undefined); // this is optional
-      const res = await getRegistrationDocs();
+      let res = await getRegistrationDocs();
       if (!active) {
         return;
       }
+      const sortTimes = (a: any, b: any) => {
+        if (a.time < b. time) return 1;
+        else return -1;
+      }
+
+      res = res.sort(sortTimes)
       setResult(res);
     }
   }, [refetch]);

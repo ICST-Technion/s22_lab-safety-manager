@@ -22,10 +22,16 @@ export const StudentsPage = () => {
 
     async function load() {
       setResult(undefined); // this is optional
-      const res = await getStudentsDocs();
+      let res = await getStudentsDocs();
       if (!active) {
         return;
       }
+      const sortName = (a: any, b: any) => {
+        if (a.name >= b. name) return 1;
+        else return -1;
+      }
+
+      res = res.sort(sortName)
       setResult(res);
     }
   }, [refetch]);
