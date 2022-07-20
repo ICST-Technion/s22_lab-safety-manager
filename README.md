@@ -3,7 +3,7 @@
 ## How to use the device:
 1. Connect the sonoff to electricity and connect the machine to the sonoff.
 2. Connect the device to electricity.
-3. Manage permissions and users through Safety Manger Website.
+3. Manage permissions and users through Safety Manger Website (Notice - level 1 is the highest permission, allows usage of all the machines).
 
 ## Important links:
 1. Safety Manger Website - https://safetymanager-52fc3.web.app/
@@ -19,8 +19,6 @@
 1. The sonoff MAC address on the ESP32 code. When uploading the code to the sonoff, it's MAC address will appear on the monitor. The lab     manager should copy this MAC address and define it on line 114.
 2. When uploading the code to the ESP32, the lab manager should define in line 20 the machine ID as he defined on the website.
 3. On the ESP32 code - update WiFi parameters (Name and password) on lines 9-10.
-
-
 
 ## Main libraries used in the project:
 1. Firebase_ESP_Client.h
