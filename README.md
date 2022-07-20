@@ -7,7 +7,7 @@
 
 ## How to use the device:
 1. Parameters that are hard coded: 
-   a. The sonoff MAC address on the ESP32 code. When uploading the code to the sonoff, it's MAC address will appear on the monitor. The lab     manager should copy this MAC address and define it on line 114.
+   a. The sonoff MAC address on the ESP32 code. When uploading the code to the sonoff, it's MAC address will appear on the monitor. The lab     manager should copy this MAC address and define it on line 114.\n
    b. When uploading the code to the ESP32, the lab manager should define in line 20 the machine ID as he defined on the website.
    c. On the ESP32 code - update WiFi parameters (Name and password) on lines 9-10.
 2. Connect the sonoff to electricity and connect the machine to the sonoff.
