@@ -5,7 +5,16 @@
 2. Schedule and summary of meetings during the semester - https://docs.google.com/document/d/1P6jc5bVWA_hnhraxQq3wialfgLse7NmTXBHypVYeOqE/edit
 
 ## How to use the device:
-1. Parameter that is hard coded - machineID which the device connects to.
+1. Parameter that is hard coded - machineID which the device connects to (esp-32 code line 23).
 2. Connect the sonoff to electricity and connect the machine to the sonoff.
 3. Connect the device to electricity.
 4. Manage permissions and users through Safety Manger Website.
+
+## Main libraries used in the project:
+1. Firebase_ESP_Client.h
+2. MFRC522.h
+3. espnow.h
+4. ESP8266WiFi.h
+5. ESP8266WebServer.h
+6. ESP8266mDNS.h
+7. WiFi.h
