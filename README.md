@@ -5,7 +5,9 @@
 2. Schedule and summary of meetings during the semester - https://docs.google.com/document/d/1P6jc5bVWA_hnhraxQq3wialfgLse7NmTXBHypVYeOqE/edit
 
 ## How to use the device:
-1. Parameter that is hard coded - when uploading the code to the ESP32, the manager should define in line 23 the machine ID.
+1. Parameters that are hard coded: 
+  a. When uploading the code to the ESP32, the lab manager should define in line 20 the machine ID as he defined on the website.
+  b. When uploading the code to the sonoff, it's MAC address will appear on the monitor. The lab manager should copy this MAC address and define it on line 
 2. Connect the sonoff to electricity and connect the machine to the sonoff.
 3. Connect the device to electricity.
 4. Manage permissions and users through Safety Manger Website.
