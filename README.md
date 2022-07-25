@@ -6,7 +6,7 @@
 3. Manage permissions and users through Safety Manager Website (Notice - level 1 is the highest permission, allows usage of all machines).
 
 ## Important links:
-1. Safety Manger Website - https://safetymanager-52fc3.web.app/
+1. Safety Manager Website - https://safetymanager-52fc3.web.app/
 2. Schedule and summary of meetings during the semester - https://docs.google.com/document/d/1P6jc5bVWA_hnhraxQq3wialfgLse7NmTXBHypVYeOqE/edit
 3. Reflashing sonoff26 firmware - https://tasmota.github.io/docs/devices/Sonoff-S26-Smart-Socket/#led-state
 
