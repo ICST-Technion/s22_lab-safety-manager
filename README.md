@@ -3,7 +3,7 @@
 ## How to use the device:
 1. Connect the sonoff to electricity and connect the machine to the sonoff.
 2. Connect the device to electricity.
-3. Manage permissions and users through Safety Manger Website (Notice - level 1 is the highest permission, allows usage of all the machines).
+3. Manage permissions and users through Safety Manager Website (Notice - level 1 is the highest permission, allows usage of all machines).
 
 ## Important links:
 1. Safety Manger Website - https://safetymanager-52fc3.web.app/
