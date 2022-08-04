@@ -21,10 +21,10 @@
 3. On the ESP32 code - update WiFi parameters (Name and password) on lines 9-10.
 
 ## Main libraries used in the project:
-1. Firebase_ESP_Client.h
-2. MFRC522.h
-3. espnow.h
-4. ESP8266WiFi.h
-5. ESP8266WebServer.h
-6. ESP8266mDNS.h
-7. WiFi.h
+1. Firebase_ESP_Client.h - 3.15.5
+2. MFRC522.h - 1.4.10
+3. espnow.h - 2.0
+4. ESP8266WiFi.h - 1.0
+5. ESP8266WebServer.h - 1.0
+6. ESP8266mDNS.h - 1.1
+7. WiFi.h - 1.2.7
